@@ -59,11 +59,11 @@ function init(req, data) {
   }
 
   // 创建tag
-  const tagName = createTag(data, cfg);
+  const tagObj = createTag(data, cfg);
 
   // 推送钉钉消息
   if (cfg.dingtalkToken) {
-    sendMsg(data, cfg, tagName);
+    sendMsg(data, cfg, tagObj);
   }
 
   return { code: 200, message: '' }
@@ -103,9 +103,9 @@ function getConfig(data, config) {
  * @param  {Object} data  响应数据
  * @return
  */
-function sendMsg(data, cfg, tagName) {
+function sendMsg(data, cfg, tagObj) {
   // 获取文案
-  const text = getArgs(data, cfg, tagName);
+  const text = getArgs(data, cfg, tagObj);
 
   // 推送钉钉消息
   sendDingtalkMessage(text, cfg);
@@ -130,7 +130,7 @@ function sendMsg(data, cfg, tagName) {
    * @param  {Object} data  [description]
    * @return {String}       [description]
    */
-  function getArgs(data, cfg, tagName) {
+  function getArgs(data, cfg, tagObj) {
     const obj_attr = data.object_attributes || {};
     const assignee = data.assignee || {};
     const last_commit = obj_attr.last_commit || {};
@@ -144,7 +144,7 @@ function sendMsg(data, cfg, tagName) {
           `> MR仓储: ${data.project.name}\n\n` +
           `> 上线信息: ${obj_attr.title}\n\n` +
           `> 合并分支: ${obj_attr.source_branch}\n\n` +
-          `> 上线Tag: **${tagName}**\n\n` +
+          `> 上线Tag: **${tagObj.tagName}**\n\n` +
           `> 开发人员: ${author.name}\n\n` +
           `> 合并人员: ${assignee.name || assignee.username || author.name}\n\n` +
           `> MR详情: [view merge request](${obj_attr.url})`
@@ -189,7 +189,7 @@ function createTag(data, cfg) {
   const tagMsg = cfg.getTagMsg.call(cfg, data, project_path);
 
   let tagCmd = `git tag -a ${tagName}`;
-  if (tagMsg) tagCmd += ' -m ${tagMsg}';
+  if (tagMsg) tagCmd += ` -m '${tagMsg}'`;
 
   exec(tagCmd, { cwd: `${project_path}` });
   exec(`git push origin ${tagName}`, { cwd: `${project_path}` });
